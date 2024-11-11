@@ -1,0 +1,87 @@
+﻿@page "/FormularioEstadoCivil"
+@page "/FormularioEstadoCivil/{idEstadoCivilEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+@using Microsoft.AspNetCore.Components.Authorization;
+@inject AuthenticationStateProvider AuthenticationStateProvider; // Inyección del estado de autenticación
+
+
+@inject IEstadoCivil estadocivilService;
+@inject NavigationManager navegation;
+
+<h3>Formulario Estado Civil</h3>
+
+
+<EditForm Model="estadocivil" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="estadocivil.Nombre"></InputText>
+        <ValidationMessage For="@(()=>estadocivil.Nombre)"></ValidationMessage>
+    </div>
+
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="VistaEstadoCivil">Volver</a>
+</EditForm>
+
+@code {
+
+    [Parameter]
+    public int idEstadoCivilEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    EstadoCivilEC estadocivil = new EstadoCivilEC();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (idEstadoCivilEditar != 0)
+        {
+            estadocivil = await estadocivilService.Buscar(idEstadoCivilEditar);
+            btnTexto = "Actualizar Estado Civil";
+            Titulo = "Editar Estado Civil";
+        }
+        else
+        {
+
+            btnTexto = "Guardar  Estado Civil";
+            Titulo = "Guardar  Estado Civil";
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (idEstadoCivilEditar == 0)
+        {
+            // Al crear un nuevo registro, llenamos los datos automáticamente
+            estadocivil.FechaCreacion = DateTime.Now;
+            estadocivil.UsuarioCreacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await estadocivilService.Guardar(estadocivil);
+        }
+        else
+        {
+            // Al modificar un registro, llenamos la fecha y usuario de modificación
+            estadocivil.FechaModificacion = DateTime.Now;
+            estadocivil.UsuarioModificacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await estadocivilService.Editar(estadocivil);
+        }
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/VistaEstadoCivil");
+    }
+
+
+}

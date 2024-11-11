@@ -1,0 +1,95 @@
+﻿@page "/FormularioGenero"
+@page "/FormularioGenero/{idGeneroEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+
+
+@inject IGenero generoService;
+@inject NavigationManager navegation;
+
+<h3>Formulario Genero</h3>
+
+
+<EditForm Model="genero" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="genero.Nombre"></InputText>
+        <ValidationMessage For="@(()=>genero.Nombre)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Creacion</label>
+        <InputDate class="form-control" @bind-Value="genero.FechaCreacion" />
+        <ValidationMessage For="@(() => genero.FechaCreacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Creacion</label>
+        <InputText class="form-control" @bind-Value="genero.UsuarioCreacion"></InputText>
+        <ValidationMessage For="@(()=>genero.UsuarioCreacion)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Modificacion</label>
+        <InputDate class="form-control" @bind-Value="genero.FechaModificacion" />
+        <ValidationMessage For="@(() => genero.FechaModificacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Modificacion</label>
+        <InputText class="form-control" @bind-Value="genero.UsuarioModificacion"></InputText>
+        <ValidationMessage For="@(()=>genero.UsuarioModificacion)"></ValidationMessage>
+    </div>
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="VistaPage">Volver</a>
+</EditForm>
+
+@code {
+
+    [Parameter]
+    public int idGeneroEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    GeneroGR genero = new GeneroGR();
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (idGeneroEditar != 0)
+        {
+            genero = await generoService.Buscar(idGeneroEditar);
+            btnTexto = "Actualizar Genero";
+            Titulo = "Editar Genero";
+        }
+        else
+        {
+
+            btnTexto = "Guardar  Genero";
+            Titulo = "Guardar  Genero";
+
+        }
+
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+        if (idGeneroEditar == 0)
+            idDevuelto = await generoService.Guardar(genero);
+        else
+            idDevuelto = await generoService.Editar(genero);
+
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/VistaPage");
+    }
+
+
+}

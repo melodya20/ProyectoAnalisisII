@@ -1,0 +1,163 @@
+﻿@page "/FormularioRoleOP"
+@page "/FormularioRoleOP/{idRole:int}/{idOpcion:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+@inject IRoleOP roleOpcionService;
+@inject IOpcion opcionService;
+@inject IRole roleService;
+@inject NavigationManager navegation;
+@inject HttpClient Http
+@using CurrieTechnologies.Razor.SweetAlert2
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+
+<h3>Tipo de Role Opciones</h3>
+
+<EditForm Model="roleOP" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+
+    <div class="mb-3">
+        <label class="form-label">Role</label>
+        <InputSelect class="form-select" @bind-Value="roleOP.IdRole">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listaroleRL)
+            {
+                <option value="@item.IdRole">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => roleOP.IdRole)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Opción</label>
+        <InputSelect class="form-select" @bind-Value="roleOP.IdOpcion">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listaopcion)
+            {
+                <option value="@item.IdOpcion">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => roleOP.IdOpcion)"></ValidationMessage>
+    </div>
+
+    <!-- Campos adicionales -->
+    <div class="mb-3">
+        <label class="form-label">Alta</label>
+        <InputNumber class="form-control" @bind-Value="roleOP.Alta" />
+        <ValidationMessage For="@(() => roleOP.Alta)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Baja</label>
+        <InputNumber class="form-control" @bind-Value="roleOP.Baja" />
+        <ValidationMessage For="@(() => roleOP.Baja)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Cambio</label>
+        <InputNumber class="form-control" @bind-Value="roleOP.Cambio" />
+        <ValidationMessage For="@(() => roleOP.Cambio)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Imprimir</label>
+        <InputNumber class="form-control" @bind-Value="roleOP.Imprimir" />
+        <ValidationMessage For="@(() => roleOP.Imprimir)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Exportar</label>
+        <InputNumber class="form-control" @bind-Value="roleOP.Exportar" />
+        <ValidationMessage For="@(() => roleOP.Exportar)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Creación</label>
+        <InputDate class="form-control" @bind-Value="roleOP.FechaCreacion" />
+        <ValidationMessage For="@(() => roleOP.FechaCreacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Creación</label>
+        <InputText class="form-control" @bind-Value="roleOP.UsuarioCreacion" />
+        <ValidationMessage For="@(() => roleOP.UsuarioCreacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Modificación</label>
+        <InputDate class="form-control" @bind-Value="roleOP.FechaModificacion" />
+        <ValidationMessage For="@(() => roleOP.FechaModificacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Modificación</label>
+        <InputText class="form-control" @bind-Value="roleOP.UsuarioModificacion" />
+        <ValidationMessage For="@(() => roleOP.UsuarioModificacion)" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="/VistaRoleOP">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int idOpcion { get; set; }
+
+    [Parameter]
+    public int idRole { get; set; }
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    RoleOP roleOP = new RoleOP();
+
+    List<OpcionOP> listaopcion = new();
+    List<RoleRL> listaroleRL = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        listaopcion = await opcionService.Lista();
+        listaroleRL = await roleService.Lista();
+
+        if (idRole != 0 && idOpcion != 0)
+        {
+            roleOP = await roleOpcionService.Buscar(idRole, idOpcion);
+            Titulo = "Editar Rol del Usuario";
+            btnTexto = "Actualizar";
+        }
+        else
+        {
+            // Inicializa un nuevo objeto RoleOP para la creación de un nuevo registro
+            roleOP = new RoleOP();
+            Titulo = "Crear Nuevo Rol para el Usuario";
+            btnTexto = "Guardar";
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        try
+        {
+            bool resultado = false;
+
+            if (idRole != 0 && idOpcion != 0)
+            {
+                resultado = await roleOpcionService.Editar(roleOP);
+            }
+            else
+            {
+                resultado = await roleOpcionService.Guardar(roleOP);
+            }
+
+            if (resultado)
+            {
+                navegation.NavigateTo("/VistaRoleOP");
+            }
+            else
+            {
+                Console.WriteLine("Error al guardar o editar la opción del rol.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}, StackTrace: {ex.StackTrace}");
+        }
+    }
+
+}

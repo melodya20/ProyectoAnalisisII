@@ -1,0 +1,90 @@
+﻿@page "/FormularioTSCuenta"
+@page "/FormularioTSCuenta/{idTipoSaldoCuentaEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+@using Microsoft.AspNetCore.Components.Authorization;
+@inject AuthenticationStateProvider AuthenticationStateProvider; // Inyección del estado de autenticación
+
+
+@inject ITipoSaldoCuenta tscuentaService;
+@inject NavigationManager navegation;
+
+<h3>Formulario Tipo Saldo de Cuenta</h3>
+
+
+<EditForm Model="tscuenta" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="tscuenta.Nombre"></InputText>
+        <ValidationMessage For="@(()=>tscuenta.Nombre)"></ValidationMessage>
+    </div>
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="VistaTSCuenta">Volver</a>
+</EditForm>
+
+@code {
+
+    [Parameter]
+    public int idTipoSaldoCuentaEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    TipoSaldoCuentaTSC tscuenta = new TipoSaldoCuentaTSC();
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (idTipoSaldoCuentaEditar != 0)
+        {
+            tscuenta = await tscuentaService.Buscar(idTipoSaldoCuentaEditar);
+            btnTexto = "Actualizar Tipo Saldo de Cuenta";
+            Titulo = "Editar Tipo Saldo de Cuenta";
+        }
+        else
+        {
+
+            btnTexto = "Guardar  Tipo Saldo de Cuenta";
+            Titulo = "Guardar  Tipo Saldo de Cuenta";
+
+        }
+
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (idTipoSaldoCuentaEditar == 0)
+        {
+            // Al crear un nuevo registro, llenamos los datos automáticamente
+            tscuenta.FechaCreacion = DateTime.Now;
+            tscuenta.UsuarioCreacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await tscuentaService.Guardar(tscuenta);
+        }
+        else
+        {
+            // Al modificar un registro, llenamos la fecha y usuario de modificación
+            tscuenta.FechaModificacion = DateTime.Now;
+            tscuenta.UsuarioModificacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await tscuentaService.Editar(tscuenta);
+        }
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/VistaTSCuenta");
+    }
+
+
+}

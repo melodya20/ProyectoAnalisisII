@@ -1,0 +1,113 @@
+﻿@page "/FormularioOpcion"
+@page "/FormularioOpcion/{idOpcionEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+
+@inject IMenu menuService;
+@inject IOpcion opcionService;
+@inject NavigationManager navegation;
+
+<h3>Formulario Opcion</h3>
+
+<EditForm Model="opcion" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Menu</label>
+        <InputSelect class="form-select" @bind-Value="opcion.IdMenu">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listamenu)
+            {
+                <option value="@item.IdMenu">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => opcion.IdMenu)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="opcion.Nombre"></InputText>
+        <ValidationMessage For="@(()=>opcion.Nombre)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Orden de Menu </label>
+        <InputNumber class="form-control" @bind-Value="opcion.OrdenMenu"></InputNumber>
+        <ValidationMessage For="@(()=>opcion.OrdenMenu)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Pagina</label>
+        <InputText class="form-control" @bind-Value="opcion.Pagina"></InputText>
+        <ValidationMessage For="@(()=>opcion.Pagina)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Creacion</label>
+        <InputDate class="form-control" @bind-Value="opcion.FechaCreacion" />
+        <ValidationMessage For="@(() => opcion.FechaCreacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Creacion</label>
+        <InputText class="form-control" @bind-Value="opcion.UsuarioCreacion"></InputText>
+        <ValidationMessage For="@(()=>opcion.UsuarioCreacion)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Modificacion</label>
+        <InputDate class="form-control" @bind-Value="opcion.FechaModificacion" />
+        <ValidationMessage For="@(() => opcion.FechaModificacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Modificacion</label>
+        <InputText class="form-control" @bind-Value="opcion.UsuarioModificacion"></InputText>
+        <ValidationMessage For="@(()=>opcion.UsuarioModificacion)"></ValidationMessage>
+    </div>
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="VistaOpcion">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int idOpcionEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    OpcionOP opcion = new OpcionOP();
+    MenuMN menu = new MenuMN();
+    List<MenuMN> listamenu = new List<MenuMN>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        listamenu = await menuService.Lista();
+
+        if (idOpcionEditar != 0)
+        {
+            opcion = await opcionService.Buscar(idOpcionEditar);
+            btnTexto = "Actualizar la Opcion";
+            Titulo = "Edita la Opcion ";
+        }
+        else
+        {
+
+            btnTexto = "Guardar la Opcion";
+            Titulo = "Guardar la Opcion";
+
+        }
+
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+        if (idOpcionEditar == 0)
+            idDevuelto = await opcionService.Guardar(opcion);
+        else
+            idDevuelto = await opcionService.Editar(opcion);
+
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/VistaOpcion");
+    }
+
+}

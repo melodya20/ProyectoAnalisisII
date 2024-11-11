@@ -1,0 +1,123 @@
+﻿@page "/FormularioCuenta"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+@inject HttpClient Http
+@inject ISaldoCuenta saldoService
+@inject IPersona personaService
+@inject IStatusCuentum statusService
+@inject ITipoSaldoCuenta tiposaldoService
+@using Microsoft.AspNetCore.Components.Authorization;
+@inject AuthenticationStateProvider AuthenticationStateProvider; // Inyección del estado de autenticación
+
+@inject NavigationManager navegation
+
+<h3>Formulario Saldo de Cuentas</h3>
+
+<EditForm Model="saldo" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+
+    <div class="mb-3">
+        <label class="form-label">Persona</label>
+        <InputSelect class="form-select" @bind-Value="saldo.IdPersona">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listaPersona)
+            {
+                <option value="@item.IdPersona">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => saldo.IdPersona)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Status Cuenta</label>
+        <InputSelect class="form-select" @bind-Value="saldo.IdStatusCuenta">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listaStatus)
+            {
+                <option value="@item.IdStatusCuentum">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => saldo.IdStatusCuenta)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Tipo de Saldo</label>
+        <InputSelect class="form-select" @bind-Value="saldo.IdTipoSaldoCuenta">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listatiposaldo)
+            {
+                <option value="@item.IdTipoSaldoCuenta">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => saldo.IdTipoSaldoCuenta)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Saldo Anterior</label>
+        <InputNumber class="form-control" @bind-Value="saldo.SaldoAnterior"></InputNumber>
+        <ValidationMessage For="@(() => saldo.SaldoAnterior)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Debitos</label>
+        <InputNumber class="form-control" @bind-Value="saldo.Debitos"></InputNumber>
+        <ValidationMessage For="@(() => saldo.Debitos)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Creditos</label>
+        <InputNumber class="form-control" @bind-Value="saldo.Creditos"></InputNumber>
+        <ValidationMessage For="@(() => saldo.Creditos)" />
+    </div>
+
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="SaldoCuentas">Volver</a>
+</EditForm>
+
+@code {
+    private SaldoCuentumSC saldo = new SaldoCuentumSC();
+    private List<PersonaP> listaPersona = new List<PersonaP>();
+    private List<StatusCuentumST> listaStatus = new List<StatusCuentumST>();
+    private List<TipoSaldoCuentaTSC> listatiposaldo = new List<TipoSaldoCuentaTSC>();
+
+    string Titulo = "Nuevo Saldo";
+    string btnTexto = "Crear Cuenta";
+    private string UsuarioActual;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Obtener el estado de autenticación y el usuario actual
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // Almacenar el nombre del usuario autenticado
+        UsuarioActual = user.Identity?.Name;
+
+        // Cargar listas de datos desde servicios
+        listaPersona = await personaService.Lista();
+        listaStatus = await statusService.Lista();
+        listatiposaldo = await tiposaldoService.Lista();
+
+        // Inicializa propiedades de creación
+        saldo.FechaCreacion = DateTime.Now;
+        saldo.UsuarioCreacion = user.Identity.Name;  // Reemplaza con el usuario autenticado
+    }
+
+    private async Task OnValidSubmit()
+    {
+        // Guardar el saldo en la base de datos a través del servicio
+        await saldoService.Guardar(saldo);
+
+        // Redirigir a la vista de saldos después de guardar
+        navegation.NavigateTo("/SaldoCuentas");
+    }
+
+    private void Regresar()
+    {
+        // Redirigir a la vista de saldos sin guardar cambios
+        navegation.NavigateTo("/SaldoCuentas");
+    }
+}

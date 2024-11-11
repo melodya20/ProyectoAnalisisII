@@ -1,0 +1,135 @@
+﻿@page "/FormularioUsuarioRol"
+@page "/FormularioUsuarioRol/{idUsuario}/{idRole:int}"
+
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+
+@inject IUsuarioServices usuarioService;
+@inject IRole roleService;
+@inject IUsuarioRole rolopService;
+@inject NavigationManager navegation;
+@inject HttpClient Http;
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+
+<h3>Role del Usuario </h3>
+
+<EditForm Model="rol" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+
+    <div class="mb-3">
+        <label class="form-label">Usuario</label>
+        <InputSelect class="form-select" @bind-Value="rol.IdUsuario">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listausuario)
+            {
+                <option value="@item.IdUsuario">@item.IdUsuario</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => rol.IdUsuario)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Role</label>
+        <InputSelect class="form-select" @bind-Value="rol.IdRole">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listaroleRL)
+            {
+                <option value="@item.IdRole">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => rol.IdRole)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fecha Creacion</label>
+        <InputDate class="form-control" @bind-Value="rol.FechaCreacion" />
+        <ValidationMessage For="@(() => rol.FechaCreacion)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Usuario Creacion</label>
+        <InputText class="form-control" @bind-Value="rol.UsuarioCreacion"></InputText>
+        <ValidationMessage For="@(()=>rol.UsuarioCreacion)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Fecha Modificacion</label>
+        <InputDate class="form-control" @bind-Value="rol.FechaModificacion" />
+        <ValidationMessage For="@(() => rol.FechaModificacion)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Usuario Modificacion</label>
+        <InputText class="form-control" @bind-Value="rol.UsuarioModificacion"></InputText>
+        <ValidationMessage For="@(()=>rol.UsuarioModificacion)"></ValidationMessage>
+    </div>
+
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="VistaUsuarioRol">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public string idUsuario { get; set; }
+
+    [Parameter]
+    public int idRole { get; set; }
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    UsuarioRoleURL rol = new UsuarioRoleURL();
+    List<UsuarioUSO> listausuario = new();
+    List<RoleRL> listaroleRL = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        listausuario = await usuarioService.Lista();
+        listaroleRL = await roleService.Lista();
+
+        if (!string.IsNullOrEmpty(idUsuario) && idRole != 0)
+        {
+            var usuarioSeleccionado = listausuario.FirstOrDefault(u => u.IdUsuario == idUsuario);
+            var roleSeleccionado = listaroleRL.FirstOrDefault(r => r.IdRole == idRole);
+
+            if (usuarioSeleccionado != null && roleSeleccionado != null)
+            {
+                rol = await rolopService.Buscar(usuarioSeleccionado.IdUsuario, roleSeleccionado.IdRole);
+                Titulo = "Editar Rol del Usuario";
+                btnTexto = "Actualizar";
+            }
+        }
+        else
+        {
+            Titulo = "Crear Nuevo Rol para el Usuario";
+            btnTexto = "Guardar";
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        bool resultado;
+        if (!string.IsNullOrEmpty(idUsuario) && idRole != 0)
+        {
+            resultado = await rolopService.Editar(rol);
+        }
+        else
+        {
+            resultado = await rolopService.Guardar(rol);
+        }
+
+        if (resultado)
+        {
+            navegation.NavigateTo("/VistaUsuarioRol");
+        }
+        else
+        {
+            Console.WriteLine("Error al guardar o editar el rol del usuario.");
+        }
+    }
+}

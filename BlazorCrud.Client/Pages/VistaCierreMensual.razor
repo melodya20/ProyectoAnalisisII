@@ -1,0 +1,56 @@
+﻿@page "/VistaCierreMensual"
+@using BlazorCrud.Shared
+@using CurrieTechnologies.Razor.SweetAlert2
+@using BlazorCrud.Client.Services
+@inject CierreMensualService cierreMensualService
+@inject NavigationManager navigation
+
+<h3>Cierre Mensual</h3>
+
+<div>
+    <button class="btn btn-primary" @onclick="RealizarCierreMensual" disabled="@procesoEnCurso">Realizar Cierre Mensual</button>
+</div>
+
+@if (procesoEnCurso)
+{
+    <div class="mt-2">
+        <p>Cargando, por favor espere...</p> <!-- O puedes usar un spinner aquí -->
+    </div>
+}
+
+<div class="mt-2">
+    @if (mensajeCierre != null)
+    {
+        <p>@mensajeCierre</p>
+    }
+    @if (mensajeRestaurar != null)
+    {
+        <p>@mensajeRestaurar</p>
+    }
+</div>
+
+@code {
+    private bool procesoEnCurso = false;
+    private string? mensajeCierre; // Mensaje para el cierre
+    private string? mensajeRestaurar; // Mensaje para la restauración
+
+    private async Task RealizarCierreMensual()
+    {
+        procesoEnCurso = true;
+        mensajeCierre = null; // Limpiar mensaje anterior
+        try
+        {
+            // Iniciar el cierre y obtener mensaje de éxito o error
+            mensajeCierre = await cierreMensualService.RealizarCierreMensual();
+        }
+        catch (Exception ex)
+        {
+            mensajeCierre = $"No se pudo realizar el cierre: {ex.Message}"; // Mensaje de excepción
+        }
+        finally
+        {
+            procesoEnCurso = false; // Asegúrate de restablecer esto al final
+        }
+    }
+
+}

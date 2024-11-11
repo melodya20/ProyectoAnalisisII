@@ -1,0 +1,206 @@
+﻿@page "/FormularioUsuario"
+@page "/FormularioUsuario/{IdUsuario:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+
+@inject IUsuarioServices usuarioService;
+@inject IGenero generoService;
+@inject IStatusUsuario statusUsuarioService;
+@inject ISucursal sucursalService;
+@inject NavigationManager navegation;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+
+
+<h3>Formulario Usuario</h3>
+
+<EditForm Model="usuario" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+
+    <!-- Nombre -->
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="usuario.Nombre"></InputText>
+        <ValidationMessage For="@(() => usuario.Nombre)" />
+    </div>
+
+    <!-- Apellido -->
+    <div class="mb-3">
+        <label class="form-label">Apellido</label>
+        <InputText class="form-control" @bind-Value="usuario.Apellido"></InputText>
+        <ValidationMessage For="@(() => usuario.Apellido)" />
+    </div>
+
+    <!-- Fecha de Nacimiento -->
+    <div class="mb-3">
+        <label class="form-label">Fecha de Nacimiento</label>
+        <InputDate class="form-control" @bind-Value="usuario.FechaNacimiento"></InputDate>
+        <ValidationMessage For="@(() => usuario.FechaNacimiento)" />
+    </div>
+
+    <!-- Género -->
+    <div class="mb-3">
+        <label class="form-label">Género</label>
+        <InputSelect class="form-select" @bind-Value="usuario.IdGenero">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listaGenero)
+            {
+                <option value="@item.IdGenero">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => usuario.IdGenero)" />
+    </div>
+
+    <!-- Password -->
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <InputText class="form-control" @bind-Value="usuario.Password" type="password"></InputText>
+        <ValidationMessage For="@(() => usuario.Password)" />
+    </div>
+
+    <!-- Última Fecha de Ingreso -->
+    <div class="mb-3">
+        <label class="form-label">Última Fecha de Ingreso</label>
+        <InputDate class="form-control" @bind-Value="usuario.UltimaFechaIngreso"></InputDate>
+        <ValidationMessage For="@(() => usuario.UltimaFechaIngreso)" />
+    </div>
+
+    <!-- Intentos de Acceso -->
+    <div class="mb-3">
+        <label class="form-label">Intentos de Acceso</label>
+        <InputNumber class="form-control" @bind-Value="usuario.IntentosDeAcceso"></InputNumber>
+        <ValidationMessage For="@(() => usuario.IntentosDeAcceso)" />
+    </div>
+
+    <!-- Sesión Actual -->
+    <div class="mb-3">
+        <label class="form-label">Sesión Actual</label>
+        <InputCheckbox @bind-Value="usuario._SesionActual"></InputCheckbox>
+        <ValidationMessage For="@(() => usuario._SesionActual)" />
+    </div>
+
+    <!-- Última Fecha de Cambio de Password -->
+    <div class="mb-3">
+        <label class="form-label">Última Fecha de Cambio de Password</label>
+        <InputDate class="form-control" @bind-Value="usuario.UltimaFechaCambioPassword"></InputDate>
+        <ValidationMessage For="@(() => usuario.UltimaFechaCambioPassword)" />
+    </div>
+
+    <!-- Correo Electrónico -->
+    <div class="mb-3">
+        <label class="form-label">Correo Electrónico</label>
+        <InputText class="form-control" @bind-Value="usuario.CorreoElectronico"></InputText>
+        <ValidationMessage For="@(() => usuario.CorreoElectronico)" />
+    </div>
+
+    <!-- Requiere Cambiar Password -->
+    <div class="mb-3">
+        <label class="form-label">Requiere Cambiar Password</label>
+        <InputCheckbox @bind-Value="usuario._RequiereCambiarPassword"></InputCheckbox>
+        <ValidationMessage For="@(() => usuario._RequiereCambiarPassword)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Sucursal</label>
+        <InputSelect class="form-select" @bind-Value="usuario.IdSucursal">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listaSucursal)
+            {
+                <option value="@item.IdSucursal">@item.Direccion</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => usuario.IdSucursal)" />
+    </div>
+
+    <!-- Teléfono Móvil -->
+    <div class="mb-3">
+        <label class="form-label">Teléfono Móvil</label>
+        <InputText class="form-control" @bind-Value="usuario.TelefonoMovil"></InputText>
+        <ValidationMessage For="@(() => usuario.TelefonoMovil)" />
+    </div>
+
+
+    <!-- Estado del Usuario -->
+    <div class="mb-3">
+        <label class="form-label">Estado del Usuario</label>
+        <InputSelect class="form-select" @bind-Value="usuario.IdStatusUsuario">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listaStatusUsuario)
+            {
+                <option value="@item.IdStatusUsuario">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => usuario.IdStatusUsuario)" />
+    </div>
+
+    <!-- Fotografía -->
+    <div class="mb-3">
+        <label class="form-label">Fotografía</label>
+        <InputFile OnChange="OnInputFileChange" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <button type="button" class="btn btn-secondary" @onclick="Regresar">Cancelar</button>
+</EditForm>
+
+@code {
+    private UsuarioUSO usuario = new UsuarioUSO();
+    private List<GeneroGR> listaGenero = new List<GeneroGR>();
+    private List<SucursalSC> listaSucursal = new List<SucursalSC>();
+    private List<StatusUsuarioST> listaStatusUsuario = new List<StatusUsuarioST>();
+
+    [Parameter]
+    public string? IdUsuario { get; set; }  // Cambié int a string
+
+    protected override async Task OnInitializedAsync()
+    {
+        listaGenero = await generoService.Lista();
+        listaSucursal = await sucursalService.Lista();
+        listaStatusUsuario = await statusUsuarioService.Lista();
+
+        if (!string.IsNullOrEmpty(IdUsuario))  // Verifica si el IdUsuario no es null o vacío
+        {
+            usuario = await usuarioService.Buscar(IdUsuario);
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        if (string.IsNullOrEmpty(usuario.IdUsuario))  // Nuevo Usuario
+        {
+            usuario.FechaCreacion = DateTime.Now;
+            usuario.UsuarioCreacion = "NombreDeUsuarioActual";  // Reemplaza con el nombre del usuario autenticado
+
+            await usuarioService.Guardar(usuario);
+        }
+        else  // Usuario existente
+        {
+            usuario.FechaModificacion = DateTime.Now;
+            usuario.UsuarioModificacion = "NombreDeUsuarioActual";  // Reemplaza con el nombre del usuario autenticado
+
+            await usuarioService.Editar(usuario);
+        }
+
+        navegation.NavigateTo("/VistaUsuario");
+    }
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        var buffer = new byte[file.Size];
+        using var stream = file.OpenReadStream();
+
+        // Lee los datos del archivo y devuelve la cantidad de bytes leídos
+        var bytesRead = await stream.ReadAsync(buffer, 0, (int)file.Size);
+
+        // Asigna directamente el buffer a la propiedad Fotografia
+        usuario.Fotografia = buffer;
+    }
+
+    private void Regresar()
+    {
+        navegation.NavigateTo("/VistaUsuario");
+    }
+}

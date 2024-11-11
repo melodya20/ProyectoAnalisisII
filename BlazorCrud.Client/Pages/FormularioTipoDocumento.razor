@@ -1,0 +1,78 @@
+﻿@page "/FormularioTipoDocumento"
+@page "/FormularioTipoDocumento/{idTipoDocumentoEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+@using Microsoft.AspNetCore.Components.Authorization;
+@inject AuthenticationStateProvider AuthenticationStateProvider; // Inyección del estado de autenticación
+
+@inject ITipoDocumento TipoDocumentoService;
+@inject NavigationManager navegation;
+
+<h3>Formulario Tipo de Documento</h3>
+
+<EditForm Model="tipoDocumento" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="tipoDocumento.Nombre"></InputText>
+        <ValidationMessage For="@(() => tipoDocumento.Nombre)"></ValidationMessage>
+    </div>
+
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="VistaTipoDocumento">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int idTipoDocumentoEditar { get; set; } = 0;
+
+    string btnTexto = string.Empty;
+
+    TipoDocumentoTD tipoDocumento = new TipoDocumentoTD();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (idTipoDocumentoEditar != 0)
+        {
+            tipoDocumento = await TipoDocumentoService.Buscar(idTipoDocumentoEditar);
+            btnTexto = "Actualizar Tipo Documento";
+        }
+        else
+        {
+            btnTexto = "Guardar Tipo Documento";
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (idTipoDocumentoEditar == 0)
+        {
+            // Al crear un nuevo registro, llenamos los datos automáticamente
+            tipoDocumento.FechaCreacion = DateTime.Now;
+            tipoDocumento.UsuarioCreacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await TipoDocumentoService.Guardar(tipoDocumento);
+        }
+        else
+        {
+            // Al modificar un registro, llenamos la fecha y usuario de modificación
+            tipoDocumento.FechaModificacion = DateTime.Now;
+            tipoDocumento.UsuarioModificacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await TipoDocumentoService.Editar(tipoDocumento);
+        }
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/VistaPage");
+    }
+}

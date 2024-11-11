@@ -1,0 +1,150 @@
+﻿@page "/FormularioMovCuenta"
+@page "/FormularioMovCuenta/{idMovCEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+@inject HttpClient Http
+@inject IMovCuenta movimientoService
+@inject ISaldoCuenta saldoService
+@inject ITipoMovCuentaCorriente cuentaService
+@inject IPersona personaService
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+@using Microsoft.AspNetCore.Components.Authorization;
+@inject AuthenticationStateProvider AuthenticationStateProvider; // Inyección del estado de autenticación
+
+@inject NavigationManager navegation;
+
+<h3>Movimiento de Cuentas</h3>
+
+<EditForm Model="MovCuenta" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+
+    <!-- Selección de Persona -->
+    <div class="mb-3">
+        <label class="form-label">Persona</label>
+        <InputSelect class="form-select" @bind-Value="MovCuenta.IdSaldoCuenta">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listapersona)
+            {
+                <option value="@item.IdPersona">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => MovCuenta.IdSaldoCuenta)" />
+    </div>
+
+    <!-- Selección de Tipo de Movimiento -->
+    <div class="mb-3">
+        <label class="form-label">Movimiento Cuenta</label>
+        <InputSelect class="form-select" @bind-Value="MovCuenta.IdTipoMovimientoCxc">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listaMovcuentaCo)
+            {
+                <option value="@item.IdTipoMovimientoCXC">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => MovCuenta.IdTipoMovimientoCxc)" />
+    </div>
+
+    <!-- Fecha de Movimiento -->
+
+    <div class="mb-3">
+        <label class="form-label">Fecha Movimiento</label>
+        <InputDate class="form-control" @bind-Value="MovCuenta.FechaMovimiento" />
+        <ValidationMessage For="@(() => MovCuenta.FechaMovimiento)" />
+    </div>
+
+    <!-- Valor del Movimiento -->
+    <div class="mb-3">
+        <label class="form-label">Valor Movimiento</label>
+        <InputNumber class="form-control" @bind-Value="MovCuenta.ValorMovimiento"></InputNumber>
+        <ValidationMessage For="@(() => MovCuenta.ValorMovimiento)" />
+    </div>
+
+    <!-- Valor Movimiento Pagado -->
+    <div class="mb-3">
+        <label class="form-label">Valor Movimiento Pagado</label>
+        <InputNumber class="form-control" @bind-Value="MovCuenta.ValorMovimientoPagado"></InputNumber>
+        <ValidationMessage For="@(() => MovCuenta.ValorMovimientoPagado)" />
+    </div>
+
+    <!-- Generado Automáticamente -->
+    <div class="mb-3">
+        <label class="form-label">Generado Automáticamente</label>
+        <InputNumber class="form-control" @bind-Value="MovCuenta.GeneradoAutomaticamente"></InputNumber>
+        <ValidationMessage For="@(() => MovCuenta.GeneradoAutomaticamente)" />
+    </div>
+
+    <!-- Descripción -->
+    <div class="mb-3">
+        <label class="form-label">Descripción</label>
+        <InputText class="form-control" @bind-Value="MovCuenta.Descripcion"></InputText>
+        <ValidationMessage For="@(() => MovCuenta.Descripcion)"></ValidationMessage>
+    </div>
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <button class="btn btn-warning" type="button" @onclick="Volver">
+        Volver
+    </button>
+</EditForm>
+
+@code {
+    private List<MovimientoCuentaMC> listaMovimiento = new List<MovimientoCuentaMC>();
+    private List<TipoMovCuentaCorrienteCC> listaMovcuentaCo = new List<TipoMovCuentaCorrienteCC>();
+    private List<SaldoCuentumSC> listatiposaldo = new List<SaldoCuentumSC>();
+    private List<PersonaP> listapersona = new List<PersonaP>();
+
+    [Parameter]
+    public int idMovCEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    MovimientoCuentaMC MovCuenta = new MovimientoCuentaMC();
+
+    protected override async Task OnInitializedAsync()
+    {
+        listaMovimiento = await movimientoService.Lista();
+        listaMovcuentaCo = await cuentaService.Lista();
+        listatiposaldo = await saldoService.Lista();
+        listapersona = await personaService.Lista();
+
+        if (idMovCEditar != 0)
+        {
+            MovCuenta = await movimientoService.Buscar(idMovCEditar);
+            btnTexto = "Actualizar Cuenta";
+            Titulo = "Editar Cuenta";
+        }
+        else
+        {
+            btnTexto = "Guardar Cuenta";
+            Titulo = "Guardar Cuenta";
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (idMovCEditar == 0)
+        {
+            // Al crear un nuevo registro, llenamos los datos automáticamente
+            MovCuenta.FechaCreacion = DateTime.Now;
+            MovCuenta.UsuarioCreacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await movimientoService.Guardar(MovCuenta);
+        }
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/VistaMovcuentas");
+    }
+
+    private void Volver()
+    {
+        navegation.NavigateTo("/VistaMovcuentas");
+    }
+}

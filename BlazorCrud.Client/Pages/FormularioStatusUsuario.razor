@@ -1,0 +1,94 @@
+﻿@page "/FormularioStatus"
+@page "/FormularioStatus/{idStatusEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+
+
+@inject IStatusUsuario statusService;
+@inject NavigationManager navegation;
+
+<h3>Status del Usuario</h3>
+
+<EditForm Model="status" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="status.Nombre"></InputText>
+        <ValidationMessage For="@(()=>status.Nombre)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Creacion</label>
+        <InputDate class="form-control" @bind-Value="status.FechaCreacion" />
+        <ValidationMessage For="@(() => status.FechaCreacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Creacion</label>
+        <InputText class="form-control" @bind-Value="status.UsuarioCreacion"></InputText>
+        <ValidationMessage For="@(()=>status.UsuarioCreacion)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Modificacion</label>
+        <InputDate class="form-control" @bind-Value="status.FechaModificacion" />
+        <ValidationMessage For="@(() => status.FechaModificacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Modificacion</label>
+        <InputText class="form-control" @bind-Value="status.UsuarioModificacion"></InputText>
+        <ValidationMessage For="@(()=>status.UsuarioModificacion)"></ValidationMessage>
+    </div>
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="VistaStatusUsuario">Volver</a>
+</EditForm>
+
+@code {
+
+    [Parameter]
+    public int idStatusEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    StatusUsuarioST status = new StatusUsuarioST();
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (idStatusEditar != 0)
+        {
+            status = await statusService.Buscar(idStatusEditar);
+            btnTexto = "Actualizar Status Usuario";
+            Titulo = "Editar Status Usuario";
+        }
+        else
+        {
+
+            btnTexto = "Guardar  Status Usuario";
+            Titulo = "Guardar  Status Usuario";
+
+        }
+
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+        if (idStatusEditar == 0)
+            idDevuelto = await statusService.Guardar(status);
+        else
+            idDevuelto = await statusService.Editar(status);
+
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/VistaStatusUsuario");
+    }
+
+
+}

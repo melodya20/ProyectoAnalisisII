@@ -1,0 +1,89 @@
+﻿@page "/FormularioTipoAcceso"
+@page "/FormularioTipoAcceso/{idTipoEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+
+@inject ITipoAcceso tipoService;
+@inject NavigationManager navegation;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+
+<h3>Tipo de Acceso</h3>
+
+<EditForm Model="tipo" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="tipo.Nombre"></InputText>
+        <ValidationMessage For="@(()=>tipo.Nombre)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Creacion</label>
+        <InputDate class="form-control" @bind-Value="tipo.FechaCreacion" />
+        <ValidationMessage For="@(() => tipo.FechaCreacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Creacion</label>
+        <InputText class="form-control" @bind-Value="tipo.UsuarioCreacion"></InputText>
+        <ValidationMessage For="@(()=>tipo.UsuarioCreacion)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Modificacion</label>
+        <InputDate class="form-control" @bind-Value="tipo.FechaModificacion" />
+        <ValidationMessage For="@(() => tipo.FechaModificacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Modificacion</label>
+        <InputText class="form-control" @bind-Value="tipo.UsuarioModificacion"></InputText>
+        <ValidationMessage For="@(()=>tipo.UsuarioModificacion)"></ValidationMessage>
+    </div>
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="VistaPageTipo">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int idTipoEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    TipoAccesoTA tipo = new TipoAccesoTA();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (idTipoEditar != 0)
+        {
+            tipo = await tipoService.Buscar(idTipoEditar);
+            btnTexto = "Actualizar Tipo de Acceso";
+            Titulo = "Editar Tipo de Acceso ";
+        }
+        else
+        {
+
+            btnTexto = "Guardar Tipo de Acceso";
+            Titulo = "Guardar Tipo de Acceso";
+
+        }
+
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+        if (idTipoEditar == 0)
+            idDevuelto = await tipoService.Guardar(tipo);
+        else
+            idDevuelto = await tipoService.Editar(tipo);
+
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/VistaPageTipo");
+    }
+}

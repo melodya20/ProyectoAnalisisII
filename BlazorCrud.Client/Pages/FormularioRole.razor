@@ -1,0 +1,89 @@
+﻿@page "/FormularioRole"
+@page "/FormularioRole/{idRoleEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+@inject IRole roleService;
+@inject NavigationManager navegation;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+
+<h3>Formulario Role</h3>
+
+<EditForm Model="role" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="role.Nombre"></InputText>
+        <ValidationMessage For="@(()=>role.Nombre)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Creacion</label>
+        <InputDate class="form-control" @bind-Value="role.FechaCreacion" />
+        <ValidationMessage For="@(() => role.FechaCreacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Creacion</label>
+        <InputText class="form-control" @bind-Value="role.UsuarioCreacion"></InputText>
+        <ValidationMessage For="@(()=>role.UsuarioCreacion)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Modificacion</label>
+        <InputDate class="form-control" @bind-Value="role.FechaModificacion" />
+        <ValidationMessage For="@(() => role.FechaModificacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Modificacion</label>
+        <InputText class="form-control" @bind-Value="role.UsuarioModificacion"></InputText>
+        <ValidationMessage For="@(()=>role.UsuarioModificacion)"></ValidationMessage>
+    </div>
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="VistaRole">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int idRoleEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    RoleRL role = new RoleRL();
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (idRoleEditar != 0)
+        {
+            role = await roleService.Buscar(idRoleEditar);
+            btnTexto = "Actualizar Role";
+            Titulo = "Editar Role";
+        }
+        else
+        {
+
+            btnTexto = "Guardar  Role";
+            Titulo = "Guardar  Role";
+
+        }
+
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+        if (idRoleEditar == 0)
+            idDevuelto = await roleService.Guardar(role);
+        else
+            idDevuelto = await roleService.Editar(role);
+
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/VistaRole");
+    }
+}

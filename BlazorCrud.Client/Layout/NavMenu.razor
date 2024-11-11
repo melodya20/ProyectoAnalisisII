@@ -1,0 +1,156 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
+
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">BlazorCrud.Client</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/Home" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+        <AuthorizeView Roles="Administrador">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <button class="nav-link btn btn-link" type="button" @onclick="ToggleServicios">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Seguridad
+                        <span class="float-end bi bi-chevron-down"></span>
+                    </button>
+                    <div class="nav flex-column">
+                        @if (serviciosDesplegado)
+                        {
+                            <NavLink class="nav-link px-4" href="VistaPage">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Genero
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaBitacora">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Bitacora
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaPageTipo">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Tipo de Acceso
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaStatusUsuario">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Status de Usuario
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="Vistamodulo">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Modulo
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="Vistamenu">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Menu
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaUsuario">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Usuario
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaRole">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Rol
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaRoleOP">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Rol Opcion
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaUsuarioPregunta">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Usuario Pregunta
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaOpcion">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Opcion
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaUsuarioRol">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Usuario Role
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaIEmpresa">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Empresa
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaSucursal">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Sucursal
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </Authorized>
+
+
+        </AuthorizeView><AuthorizeView Roles="Administrador">
+            <Authorized>
+                <div class="nav-item px-3">
+                    <button class="nav-link btn btn-link" type="button" @onclick="ToggleServicios2">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Modulo de Cuentas
+                        <span class="float-end bi bi-chevron-down"></span>
+                    </button>
+                    <div class="nav flex-column">
+                        @if (serviciosDesplegado2)
+                        {
+                                <NavLink class="nav-link px-4" href="VistaStatusCuentum">
+                                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Status Cuenta
+                                </NavLink>
+                                <NavLink class="nav-link px-4" href="VistaEstadoCivil">
+                                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Estado Civil
+                                </NavLink>
+                                <NavLink class="nav-link px-4" href="VistaTSCuenta">
+                                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Tipo Saldo Cuenta
+                                </NavLink>
+                                <NavLink class="nav-link px-4" href="Vistapersona">
+                                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Persona
+                                </NavLink>
+                                <NavLink class="nav-link px-4" href="VistaTipoDocumento">
+                                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Documento
+                                </NavLink>
+                                <NavLink class="nav-link px-4" href="VistaTipoMovCuentaCorriente">
+                                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Cuenta Corriente
+                                </NavLink>
+                                <NavLink class="nav-link px-4" href="SaldoCuentas">
+                                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Cuentas
+                                </NavLink>
+                                <NavLink class="nav-link px-4" href="VistaMovcuentas">
+                                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Mov Cuentas
+                                </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaCierreMensual">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Cierre
+                            </NavLink>
+                            <NavLink class="nav-link px-4" href="VistaSaldoCuentaPersona">
+                                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Estado de cuenta por persona
+                            </NavLink>
+                        }
+                    </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+    </nav>
+</div>
+
+@code {
+    @code {
+        private bool collapseNavMenu = true;
+        private bool serviciosDesplegado = false;
+        private bool serviciosDesplegado2 = false;
+
+        private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+        private void ToggleNavMenu()
+        {
+            collapseNavMenu = !collapseNavMenu;
+        }
+
+        private void ToggleServicios()
+        {
+            serviciosDesplegado = !serviciosDesplegado;
+        }
+
+        private void ToggleServicios2()
+        {
+            serviciosDesplegado2 = !serviciosDesplegado2;
+        }
+    }
+
+}
+
+
+
+
+

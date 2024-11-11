@@ -1,0 +1,142 @@
+﻿@page "/FormularioPersona"
+@page "/Formulariopersona/{idPersonaEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+
+@inject IPersona personaService;
+@inject IEstadoCivil estadocivilService;
+@inject IGenero generoService;
+@inject NavigationManager navegation;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+@using Microsoft.AspNetCore.Components.Authorization;
+@inject AuthenticationStateProvider AuthenticationStateProvider; // Inyección del estado de autenticación
+
+<h3>Formulario Persona</h3>
+
+<EditForm Model="persona" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="persona.Nombre"></InputText>
+        <ValidationMessage For="@(()=>persona.Nombre)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Apellido</label>
+        <InputText class="form-control" @bind-Value="persona.Apellido"></InputText>
+        <ValidationMessage For="@(()=>persona.Nombre)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha nacimiento</label>
+        <InputDate class="form-control" @bind-Value="persona.FechaNacimiento" />
+        <ValidationMessage For="@(() => persona.FechaNacimiento)" />
+    </div>
+    <!-- Género -->
+    <div class="mb-3">
+        <label class="form-label">IdGenero</label>
+        <InputSelect class="form-select" @bind-Value="persona.IdGenero">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listaGenero)
+            {
+                <option value="@item.IdGenero">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => persona.IdGenero)" />
+    </div>
+    <!-- Dirección -->
+    <div class="mb-3">
+        <label class="form-label">Dirección</label>
+        <InputText class="form-control" @bind-Value="persona.Direccion"></InputText>
+        <ValidationMessage For="@(() => persona.Direccion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Telefono</label>
+        <InputText class="form-control" @bind-Value="persona.Telefono"></InputText>
+        <ValidationMessage For="@(()=>persona.Telefono)"></ValidationMessage>
+    </div>
+    <!-- Correo Electrónico -->
+    <div class="mb-3">
+        <label class="form-label">Correo Electrónico</label>
+        <InputText class="form-control" @bind-Value="persona.CorreoElectronico"></InputText>
+        <ValidationMessage For="@(() => persona.CorreoElectronico)" />
+    </div>
+    <!-- Género -->
+    <div class="mb-3">
+        <label class="form-label">IdEstadoCivil</label>
+        <InputSelect class="form-select" @bind-Value="persona.IdEstadoCivil">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listaEstadoCivil)
+            {
+                <option value="@item.IdEstadoCivil">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => persona.IdEstadoCivil)" />
+    </div>
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="Vistapersona">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int idPersonaEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    PersonaP persona = new PersonaP();
+    EstadoCivilEC estadoCivil = new EstadoCivilEC();//Revisar si es necesario que esté
+
+    List<GeneroGR> listaGenero = new List<GeneroGR>();
+    List<EstadoCivilEC> listaEstadoCivil = new List<EstadoCivilEC>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        listaEstadoCivil = await estadocivilService.Lista();
+        listaGenero = await generoService.Lista();
+
+        if (idPersonaEditar != 0)
+        {
+            persona = await personaService.Buscar(idPersonaEditar);
+            btnTexto = "Actualizar persona";
+            Titulo = "Edita persona ";
+        }
+        else
+        {
+
+            btnTexto = "Guardar persona";
+            Titulo = "Guardar persona";
+
+        }
+
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (idPersonaEditar == 0)
+        {
+            // Al crear un nuevo registro, llenamos los datos automáticamente
+            persona.FechaCreacion = DateTime.Now;
+            persona.UsuarioCreacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await personaService.Guardar(persona);
+        }
+        else
+        {
+            // Al modificar un registro, llenamos la fecha y usuario de modificación
+            persona.FechaModificacion = DateTime.Now;
+            persona.UsuarioModificacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await personaService.Editar(persona);
+        }
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/Vistapersona");
+    }
+}

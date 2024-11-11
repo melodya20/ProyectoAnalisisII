@@ -1,0 +1,86 @@
+﻿@page "/FormularioSucursal"
+@page "/FormularioSucursal/{IdSucursal:int}"
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+
+@inject ISucursal sucursalService;
+@inject IEmpresaService empresaService;
+@inject NavigationManager navegation;
+
+<h3>Formulario Sucursal</h3>
+<EditForm Model="sucursal" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+
+    <!-- Nombre -->
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="sucursal.Nombre"></InputText>
+        <ValidationMessage For="@(() => sucursal.Nombre)" />
+    </div>
+
+    <!-- Dirección -->
+    <div class="mb-3">
+        <label class="form-label">Dirección</label>
+        <InputText class="form-control" @bind-Value="sucursal.Direccion"></InputText>
+        <ValidationMessage For="@(() => sucursal.Direccion)" />
+    </div>
+
+    <!-- Empresa -->
+    <div class="mb-3">
+        <label class="form-label">Empresa</label>
+        <InputSelect class="form-select" @bind-Value="sucursal.IdEmpresa">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listaEmpresas)
+            {
+                <option value="@item.IdEmpresa">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => sucursal.IdEmpresa)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <button type="button" class="btn btn-secondary" @onclick="Regresar">Cancelar</button>
+</EditForm>
+
+@code {
+    private SucursalSC sucursal = new SucursalSC();
+    private List<EmpresaEM> listaEmpresas = new List<EmpresaEM>();
+
+    [Parameter]
+    public int? IdSucursal { get; set; }  // Cambié string a int?
+
+    protected override async Task OnInitializedAsync()
+    {
+        listaEmpresas = await empresaService.Lista();
+
+        if (IdSucursal.HasValue && IdSucursal.Value > 0)  // Verifica si IdSucursal tiene un valor válido
+        {
+            sucursal = await sucursalService.Buscar(IdSucursal.Value);
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        if (sucursal.IdSucursal == 0)  // Nueva Sucursal
+        {
+            sucursal.FechaCreacion = DateTime.Now;
+            sucursal.UsuarioCreacion = "NombreDeUsuarioActual";  // Reemplaza con el nombre del usuario autenticado
+
+            await sucursalService.Guardar(sucursal);
+        }
+        else  // Sucursal existente
+        {
+            sucursal.FechaModificacion = DateTime.Now;
+            sucursal.UsuarioModificacion = "NombreDeUsuarioActual";  // Reemplaza con el nombre del usuario autenticado
+
+            await sucursalService.Editar(sucursal);
+        }
+
+        navegation.NavigateTo("/VistaSucursal");
+    }
+
+    private void Regresar()
+    {
+        navegation.NavigateTo("/VistaSucursal");
+    }
+}

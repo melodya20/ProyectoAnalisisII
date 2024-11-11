@@ -1,0 +1,155 @@
+﻿@page "/VistaUsuario"
+
+@using BlazorCrud.Shared
+@using CurrieTechnologies.Razor.SweetAlert2
+@using BlazorCrud.Client.Services
+
+@inject SweetAlertService Swall
+@inject IUsuarioServices usuarioServices
+@inject IGenero generoService
+@inject IStatusUsuario statusService
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+
+<h3>Usuarios</h3>
+
+<a class="btn btn-success btn-sm mb-3" href="FormularioUsuario">Nuevo Usuario</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>ID Usuario</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Correo Electrónico</th>
+            <th>Teléfono</th>
+            <th>Fecha Nacimiento</th>
+            <th>Fotografía</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (listaUsuarios == null)
+        {
+            <tr>
+                <td colspan="13" align="center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-cloud-arrow-down-fill" viewBox="0 0 16 16">
+                        <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708" />
+                    </svg>
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var usuario in listaUsuarios)
+            {
+                <tr>
+                    <td>@usuario.IdUsuario</td>
+                    <td>@usuario.Nombre</td>
+                    <td>@usuario.Apellido</td>
+                    <td>@usuario.CorreoElectronico</td>
+                    <td>@usuario.TelefonoMovil</td>
+                    <td>@usuario.FechaNacimiento</td>
+                    <td>
+                        <img src="@usuario.Fotografia" alt="Fotografía" style="width: 50px; height: 50px;" />
+                    </td>
+                    <td class="d-flex justify-content-start align-items-center">
+                        <a class="btn btn-primary btn-sm" href="FormularioUsuario/@usuario.IdUsuario">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-fill" viewBox="0 0 16 16">
+                                <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11z" />
+                            </svg>
+                        </a>
+                        <button type="button" class="btn btn-info btn-sm ms-2" @onclick="(() => MostrarDetalles(usuario))">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16">
+                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
+                                <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
+                            </svg>
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm ms-2" @onclick="(() => Eliminar(usuario.IdUsuario))">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                                <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V3h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H2.5zM3 4V3h10v1H3z" />
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<!-- Modal -->
+@if (mostrarModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles del Usuario</h5>
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>ID Usuario:</strong> @usuarioSeleccionado!.IdUsuario</p>
+                    <p><strong>Nombre:</strong> @usuarioSeleccionado!.Nombre</p>
+                    <p><strong>Apellido:</strong> @usuarioSeleccionado!.Apellido</p>
+                    <p><strong>Correo Electrónico:</strong> @usuarioSeleccionado!.CorreoElectronico</p>
+                    <p><strong>Teléfono Móvil:</strong> @usuarioSeleccionado!.TelefonoMovil</p>
+                    <p><strong>Fecha de Nacimiento:</strong> @usuarioSeleccionado!.FechaNacimiento</p>
+                    <p><strong>Fotografía:</strong> <img src="@usuarioSeleccionado!.Fotografia" alt="Fotografía" style="width: 100px; height: 100px;" /></p>
+                    <p><strong>Última Fecha Ingreso:</strong> @usuarioSeleccionado!.UltimaFechaIngreso</p>
+                    <p><strong>Intentos de Acceso:</strong> @usuarioSeleccionado!.IntentosDeAcceso</p>
+                    <p><strong>Última Fecha Cambio Password:</strong> @usuarioSeleccionado!.UltimaFechaCambioPassword</p>
+                    <p><strong>Fecha Creación:</strong> @usuarioSeleccionado!.FechaCreacion</p>
+                    <p><strong>Usuario Creación:</strong> @usuarioSeleccionado!.UsuarioCreacion</p>
+                    <p><strong>Fecha Modificación:</strong> @usuarioSeleccionado!.FechaModificacion</p>
+                    <p><strong>Usuario Modificación:</strong> @usuarioSeleccionado!.UsuarioModificacion</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@code {
+    private List<UsuarioUSO> listaUsuarios;
+    private UsuarioUSO usuarioSeleccionado;
+    private bool mostrarModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        listaUsuarios = await usuarioServices.Lista();
+    }
+
+    private void MostrarDetalles(UsuarioUSO usuario)
+    {
+        usuarioSeleccionado = usuario;
+        mostrarModal = true;
+    }
+
+    private void CerrarModal()
+    {
+        mostrarModal = false;
+    }
+
+    private async void Eliminar(string idUsuario)
+    {
+        var result = await Swall.FireAsync(new SweetAlertOptions
+            {
+                Title = "¿Estás seguro?",
+                Text = "¡No podrás revertir esto!",
+                Icon = SweetAlertIcon.Warning,
+                ShowCancelButton = true,
+                ConfirmButtonText = "Sí, bórralo!",
+                CancelButtonText = "No, cancela!",
+            });
+
+        if (!string.IsNullOrEmpty(result?.Value))
+        {
+            await usuarioServices.Eliminar(idUsuario);
+            listaUsuarios = await usuarioServices.Lista();
+        }
+    }
+}

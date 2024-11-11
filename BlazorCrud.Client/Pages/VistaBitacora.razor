@@ -1,0 +1,129 @@
+﻿@page "/VistaBitacora"
+
+@using BlazorCrud.Shared
+@using CurrieTechnologies.Razor.SweetAlert2
+@using BlazorCrud.Client.Services
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject SweetAlertService Swall
+@inject IBitacora bitacoraService
+@inject ITipoAcceso tipoService
+@inject NavigationManager navigation
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+
+<h3>Vista de  la Bitacora</h3>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID Bitacora</th>
+            <th>ID Usuario</th>
+            <th>Tipo acceso</th>
+            <th>Fecha Acceso</th>
+            <th>Http User Agent</th>
+            <th>Direccion IP</th>
+            <th>Accion</th>
+            <th>Sistema Operativo</th>
+            <th>Dispositivo</th>
+            <th>Navegador</th>
+            <th>Sesion</th>
+            <th> </th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (listabitacora == null)
+        {
+            <tr>
+                <td colspan="13" align="center">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" fill="currentColor" class="bi bi-cloud-arrow-down-fill" viewBox="0 0 16 16">
+                        <path d="M8 2a5.53 5.53 0 0 0-3.594 1.342c-.766.66-1.321 1.52-1.464 2.383C1.266 6.095 0 7.555 0 9.318 0 11.366 1.708 13 3.781 13h8.906C14.502 13 16 11.57 16 9.773c0-1.636-1.242-2.969-2.834-3.194C12.923 3.999 10.69 2 8 2m2.354 6.854-2 2a.5.5 0 0 1-.708 0l-2-2a.5.5 0 1 1 .708-.708L7.5 9.293V5.5a.5.5 0 0 1 1 0v3.793l1.146-1.147a.5.5 0 0 1 .708.708" />
+                    </svg>
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var item in listabitacora)
+            {
+                <tr>
+                    <td>@item.IdBitacoraAcceso</td>
+                    <td>@item.IdUsuario</td>
+                    <td>@item.TipoAcceso!.Nombre</td>
+                    <td>@item.FechaAcceso</td>
+                    <td>@item.HttpUserAgent</td>
+                    <td>@item.DireccionIp</td>
+                    <td>@item.Accion</td>
+                    <td>@item.SistemaOperativo</td>
+                    <td>@item.Dispositivo</td>
+                    <td>@item.Browser</td>
+                    <td>@item.Sesion</td>
+                    <td class="d-flex justify-content-start align-items-center">
+                        <button class="btn btn-info btn-sm me-2" @onclick="(() => MostrarDetalles(item))">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye-fill" viewBox="0 0 16 16">
+                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM8 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z" />
+                                <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<!-- Modal -->
+@if (mostrarModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles de la Bitacora</h5>
+                    <button type="button" class="btn-close" aria-label="Close" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>ID Bitacora:</strong> @ticketSeleccionado!.IdBitacoraAcceso</p>
+                    <p><strong>ID Usuario:</strong> @ticketSeleccionado.IdUsuario</p>
+                    <p><strong>ID Tipo Acceso:</strong> @ticketSeleccionado!.TipoAcceso!.IdTipoAcceso</p>
+                    <p><strong>Fecha Acceso:</strong> @ticketSeleccionado.FechaAcceso</p>
+                    <p><strong>HttpUserAgent:</strong> @ticketSeleccionado.HttpUserAgent</p>
+                    <p><strong>Direccion IP:</strong> @ticketSeleccionado.DireccionIp</p>
+                    <p><strong>Accion:</strong> @ticketSeleccionado.Accion</p>
+                    <p><strong>Sistema Operativo:</strong> @ticketSeleccionado.SistemaOperativo</p>
+                    <p><strong>Dispositivo:</strong> @ticketSeleccionado.Dispositivo</p>
+                    <p><strong>Browser:</strong> @ticketSeleccionado.Browser</p>
+                    <p><strong>Sesion:</strong> @ticketSeleccionado.Sesion</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    List<BitacoraBT>? listabitacora = null;
+    BitacoraBT? ticketSeleccionado = null;
+    bool mostrarModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        listabitacora = await bitacoraService.Lista();
+    }
+
+    void MostrarDetalles(BitacoraBT ticket)
+    {
+        ticketSeleccionado = ticket;
+        mostrarModal = true;
+    }
+
+    void CerrarModal()
+    {
+        mostrarModal = false;
+    }
+
+}

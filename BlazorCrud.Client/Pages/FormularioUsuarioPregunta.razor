@@ -1,0 +1,104 @@
+﻿@page "/FormularioUsuarioPregunta"
+@page "/FormularioUsuarioPregunta/{idPreguntaEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+
+
+@inject IUsuarioPregunta UsuarioPreguntaService;
+@inject NavigationManager navigation;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+
+<h3>Preguntas de los Usuarios</h3>
+
+<EditForm Model="usuarioPreguntum" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Usuario</label>
+        <InputText class="form-control" @bind-Value="usuarioPreguntum.IdUsuario"></InputText>
+        <ValidationMessage For="@(()=>usuarioPreguntum.IdUsuario)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Pregunta</label>
+        <InputText class="form-control" @bind-Value="usuarioPreguntum.Pregunta"></InputText>
+        <ValidationMessage For="@(()=>usuarioPreguntum.Pregunta)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Respuesta</label>
+        <InputText class="form-control" @bind-Value="usuarioPreguntum.Respuesta"></InputText>
+        <ValidationMessage For="@(()=>usuarioPreguntum.Respuesta)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Orden Pregunta</label>
+        <InputNumber class="form-control" @bind-Value="usuarioPreguntum.OrdenPregunta"></InputNumber>
+        <ValidationMessage For="@(()=>usuarioPreguntum.OrdenPregunta)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Creacion</label>
+        <InputDate class="form-control" @bind-Value="usuarioPreguntum.FechaCreacion" />
+        <ValidationMessage For="@(() => usuarioPreguntum.FechaCreacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Creacion</label>
+        <InputText class="form-control" @bind-Value="usuarioPreguntum.UsuarioCreacion"></InputText>
+        <ValidationMessage For="@(()=>usuarioPreguntum.UsuarioCreacion)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Modificacion</label>
+        <InputDate class="form-control" @bind-Value="usuarioPreguntum.FechaModificacion" />
+        <ValidationMessage For="@(() => usuarioPreguntum.FechaModificacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Modificacion</label>
+        <InputText class="form-control" @bind-Value="usuarioPreguntum.UsuarioModificacion"></InputText>
+        <ValidationMessage For="@(()=>usuarioPreguntum.UsuarioModificacion)"></ValidationMessage>
+    </div>
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="VistaUsuarioPregunta">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int idPreguntaEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    UsuarioPreguntumUP usuarioPreguntum = new UsuarioPreguntumUP();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (idPreguntaEditar != 0)
+        {
+            usuarioPreguntum = await UsuarioPreguntaService.Buscar(idPreguntaEditar);
+            btnTexto = "Actualizar Usuario Pregunta";
+            Titulo = "Editar Usuario Pregunta";
+        }
+        else
+        {
+
+            btnTexto = "Guardar  Usuario Pregunta";
+            Titulo = "Guardar  Usuario Pregunta";
+
+        }
+
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+        if (idPreguntaEditar == 0)
+            idDevuelto = await UsuarioPreguntaService.Guardar(usuarioPreguntum);
+        else
+            idDevuelto = await UsuarioPreguntaService.Editar(usuarioPreguntum);
+
+
+        if (idDevuelto != 0)
+            navigation.NavigateTo("/VistaUsuarioPregunta");
+    }
+}

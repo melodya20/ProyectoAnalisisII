@@ -1,0 +1,100 @@
+﻿@inherits LayoutComponentBase
+
+@using BlazorCrud.Client.Extensiones;
+@using Microsoft.AspNetCore.Components.Authorization;
+@inject AuthenticationStateProvider autenticacionProvider
+@inject NavigationManager navManager
+@inject IJSRuntime JSRuntime
+
+<div class="page" @onmousemove="ResetInactividad" @onclick="ResetInactividad" @onkeydown="ResetInactividad">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <div class="top-row px-4">
+            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <a @onclick="CerrarSesion" href="javascript:void(0)">Salir</a>
+        </div>
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+@code {
+    private System.Timers.Timer _timer;
+    private bool mostrarNotificacion = false;
+    private DateTime ultimaActividad;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Timers.Timer(60000); // 1 minuto
+        _timer.Elapsed += async (sender, e) =>
+        {
+            await InvokeAsync(async () => await VerificarInactividad()); // Asegúrate de invocar el método en el contexto de Blazor
+        };
+        _timer.AutoReset = true;
+        _timer.Enabled = true;
+    }
+
+    private async Task CerrarSesion()
+    {
+        var autenticacionExt = (AutenticacionExtension)autenticacionProvider;
+        await autenticacionExt.ActualizarEstadoAutenticacion(null, false, false, false);
+        navManager.NavigateTo("/", true);
+    }
+
+    private async Task VerificarInactividad()
+    {
+        if (autenticacionProvider is AutenticacionExtension autenticacionExt)
+        {
+            var sesionExpirada = await autenticacionExt.VerificarInactividad();
+
+            if (sesionExpirada)
+            {
+                await MostrarAlerta();
+                mostrarNotificacion = true;
+                StateHasChanged(); // Actualiza la UI para que se muestre la alerta
+            }
+        }
+    }
+
+    private void ResetInactividad()
+    {
+        ultimaActividad = DateTime.Now; // Reinicia la hora de última actividad
+
+        if (autenticacionProvider is AutenticacionExtension autenticacionExt)
+        {
+            autenticacionExt.ActualizarUltimaActividad();
+            Console.WriteLine("Actividad detectada, reiniciando temporizador");
+        }
+    }
+
+    private async Task MostrarAlerta()
+    {
+        await JSRuntime.InvokeVoidAsync("Swal.fire", new object[]
+        {
+            new { title = "Sesión Expirada", text = "Tu sesión ha expirado. Por favor, inicia sesión de nuevo.", icon = "warning" }
+        });
+    }
+
+    private void HandleNotificationClose(bool closed)
+    {
+        mostrarNotificacion = closed;
+        StateHasChanged(); // Actualiza la UI
+    }
+
+    public void Dispose()
+    {
+        _timer?.Stop();
+        _timer?.Dispose();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Llama al método para verificar la autenticación al inicializar
+        await VerificarInactividad();
+    }
+}

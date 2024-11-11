@@ -1,0 +1,83 @@
+﻿@page "/FormularioStatusCuentum"
+@page "/FormularioStatusCuentum/{idStatusCuentumEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+@using Microsoft.AspNetCore.Components.Authorization;
+@inject AuthenticationStateProvider AuthenticationStateProvider; // Inyección del estado de autenticación
+
+@inject IStatusCuentum statuscuentumService;
+@inject NavigationManager navegation;
+
+<h3>Formulario Status de Cuenta</h3>
+
+<EditForm Model="statuscuentum" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="statuscuentum.Nombre"></InputText>
+        <ValidationMessage For="@(()=>statuscuentum.Nombre)"></ValidationMessage>
+    </div>
+
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="VistaStatusCuentum">Volver</a>
+</EditForm>
+
+@code {
+
+    [Parameter]
+    public int idStatusCuentumEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    StatusCuentumST statuscuentum = new StatusCuentumST();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (idStatusCuentumEditar != 0)
+        {
+            statuscuentum = await statuscuentumService.Buscar(idStatusCuentumEditar);
+            btnTexto = "Actualizar Status Cuenta";
+            Titulo = "Editar Status Cuenta";
+        }
+        else
+        {
+            // Nuevo registro: No se llenan los campos de fecha y usuario
+            btnTexto = "Guardar Status Cuenta";
+            Titulo = "Guardar Status Cuenta";
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (idStatusCuentumEditar == 0)
+        {
+            // Al crear un nuevo registro, llenamos los datos automáticamente
+            statuscuentum.FechaCreacion = DateTime.Now;
+            statuscuentum.UsuarioCreacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await statuscuentumService.Guardar(statuscuentum);
+        }
+        else
+        {
+            // Al modificar un registro, llenamos la fecha y usuario de modificación
+            statuscuentum.FechaModificacion = DateTime.Now;
+            statuscuentum.UsuarioModificacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await statuscuentumService.Editar(statuscuentum);
+        }
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/VistaStatusCuentum");
+    }
+}

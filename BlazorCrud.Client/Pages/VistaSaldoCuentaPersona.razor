@@ -1,0 +1,93 @@
+﻿@page "/VistaSaldoCuentaPersona"
+@using BlazorCrud.Shared
+@using CurrieTechnologies.Razor.SweetAlert2
+@using BlazorCrud.Client.Services
+
+@inject SweetAlertService Swall
+@inject ISaldoCuenta saldoService
+@inject IMovCuenta movimientoService
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@inject NavigationManager navigation
+
+<h3>Estado de cuenta por persona</h3>
+
+<div class="mb-3">
+    <label class="form-label">Buscar por ID de Persona:</label>
+    <InputNumber class="form-control" @bind-Value="idPersonaBusqueda"></InputNumber>
+    <button class="btn btn-primary mt-2" @onclick="BuscarSaldoCuenta">Buscar</button>
+</div>
+
+@if (saldoPersona != null)
+{
+    <h4>Información de la Cuenta</h4>
+    <ul>
+        <li><strong>Nombre:</strong> @saldoPersona?.Persona?.Nombre</li>
+        <li><strong>Estado de la Cuenta:</strong> @saldoPersona?.StatusCuentum?.Nombre</li>
+        <li><strong>Tipo de Saldo:</strong> @saldoPersona?.TipoSaldoCuenta?.Nombre</li>
+        <li><strong>Saldo Anterior:</strong> @saldoPersona?.SaldoAnterior</li>
+        <li><strong>Débitos:</strong> @saldoPersona?.Debitos</li>
+        <li><strong>Créditos:</strong> @saldoPersona?.Creditos</li>
+        <li><strong>Saldo Actual:</strong> @saldoPersona?.SaldoActual</li>
+    </ul>
+
+
+    <h4>Movimientos del Mes</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Fecha del Movimiento</th>
+                <th>Tipo de Movimiento</th>
+                <th>Valor del Movimiento</th>
+                <th>Descripción</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (movimientosPersona != null && movimientosPersona.Any())
+            {
+                @foreach (var mov in movimientosPersona)
+                {
+                    <tr>
+                        <td>@mov.FechaCreacion.ToShortDateString()</td>
+                        <td>@mov.movimiento?.Nombre</td>
+                        <td>@mov.ValorMovimiento</td>
+                        <td>@mov.Descripcion</td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="4" class="text-center">No se encontraron movimientos para esta persona en el mes.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else if (busquedaRealizada)
+{
+    <p class="text-danger">No se encontraron registros para el ID de Persona ingresado.</p>
+}
+
+@code {
+    private int idPersonaBusqueda;
+    private SaldoCuentumSC? saldoPersona;
+    private List<MovimientoCuentaMC> movimientosPersona = new List<MovimientoCuentaMC>(); // Inicialización de la lista vacía
+    private bool busquedaRealizada = false;
+
+    private async Task BuscarSaldoCuenta()
+    {
+        busquedaRealizada = true;
+        saldoPersona = await saldoService.ObtenerPorPersona(idPersonaBusqueda);
+
+        if (saldoPersona != null)
+        {
+            // Cargar los movimientos solo si existe saldo para la persona
+            movimientosPersona = await movimientoService.ObtenerMovimientosPorPersonaMes(idPersonaBusqueda, DateTime.Now.Month);
+        }
+        else
+        {
+            movimientosPersona = new List<MovimientoCuentaMC>();
+        }
+    }
+}

@@ -1,0 +1,79 @@
+﻿@page "/FormularioTipoMovCuentaCorriente"
+@page "/FormularioTipoMovCuentaCorriente/{IdTipoMovimientoCXC:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+@using Microsoft.AspNetCore.Components.Authorization;
+@inject AuthenticationStateProvider AuthenticationStateProvider; // Inyección del estado de autenticación
+
+@inject ITipoMovCuentaCorriente TipoMovCuentaCorrienteService;
+@inject NavigationManager Navigation;
+
+<h3>Tipo de Moviemineto de Cuenta</h3>
+
+<EditForm Model="tipoMovCuentaCorriente" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Operación Cuenta Corriente</label>
+        <InputNumber class="form-control" @bind-Value="tipoMovCuentaCorriente.OperacionCuentaCorriente" />
+        <ValidationMessage For="@(() => tipoMovCuentaCorriente.OperacionCuentaCorriente)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="tipoMovCuentaCorriente.Nombre" />
+        <ValidationMessage For="@(() => tipoMovCuentaCorriente.Nombre)" />
+    </div>
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="/VistaTipoMovCuentaCorriente">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int IdTipoMovimientoCXC { get; set; } = 0;
+
+    private string btnTexto = string.Empty;
+    private TipoMovCuentaCorrienteCC tipoMovCuentaCorriente = new TipoMovCuentaCorrienteCC();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IdTipoMovimientoCXC != 0)
+        {
+            tipoMovCuentaCorriente = await TipoMovCuentaCorrienteService.Buscar(IdTipoMovimientoCXC);
+            btnTexto = "Actualizar Tipo Movimiento Cuenta Corriente";
+        }
+        else
+        {
+            btnTexto = "Guardar Tipo Movimiento Cuenta Corriente";
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto;
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (IdTipoMovimientoCXC == 0)
+        {
+            // Al crear un nuevo registro, llenamos los datos automáticamente
+            tipoMovCuentaCorriente.FechaCreacion = DateTime.Now;
+            tipoMovCuentaCorriente.UsuarioCreacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await TipoMovCuentaCorrienteService.Guardar(tipoMovCuentaCorriente);
+        }
+        else
+        {
+            // Al modificar un registro, llenamos la fecha y usuario de modificación
+            tipoMovCuentaCorriente.FechaModificacion = DateTime.Now;
+            tipoMovCuentaCorriente.UsuarioModificacion = user.Identity.Name; // Usuario autenticado
+            idDevuelto = await TipoMovCuentaCorrienteService.Editar(tipoMovCuentaCorriente);
+        }
+        if (idDevuelto != 0)
+            Navigation.NavigateTo("/VistaTipoMovCuentaCorriente");
+    }
+}

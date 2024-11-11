@@ -1,0 +1,134 @@
+﻿@page "/EmpresaEM"
+@page "/EmpresaEM/{idempresaEditar:int}"
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject IEmpresaService empresaService;
+@inject NavigationManager navegation;
+@inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>Empresa</h3>
+
+<EditForm Model="empresa" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="empresa.Nombre"></InputText>
+        <ValidationMessage For="@(() => empresa.Nombre)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Dirección</label>
+        <InputText class="form-control" @bind-Value="empresa.Direccion"></InputText>
+        <ValidationMessage For="@(() => empresa.Direccion)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">NIT</label>
+        <InputText class="form-control" @bind-Value="empresa.Nit"></InputText>
+        <ValidationMessage For="@(() => empresa.Nit)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cantidad Mayúsculas en Password</label>
+        <InputNumber class="form-control" @bind-Value="empresa.PasswordCantidadMayusculas"></InputNumber>
+        <ValidationMessage For="@(() => empresa.PasswordCantidadMayusculas)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cantidad Minúsculas en Password</label>
+        <InputNumber class="form-control" @bind-Value="empresa.PasswordCantidadMinusculas"></InputNumber>
+        <ValidationMessage For="@(() => empresa.PasswordCantidadMinusculas)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Caracteres Especiales en Password</label>
+        <InputNumber class="form-control" @bind-Value="empresa.PasswordCantidadCaracteresEspeciales"></InputNumber>
+        <ValidationMessage For="@(() => empresa.PasswordCantidadCaracteresEspeciales)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Caducidad de Password (días)</label>
+        <InputNumber class="form-control" @bind-Value="empresa.PasswordCantidadCaducidadDias"></InputNumber>
+        <ValidationMessage For="@(() => empresa.PasswordCantidadCaducidadDias)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Largo del Password</label>
+        <InputNumber class="form-control" @bind-Value="empresa.PasswordLargo"></InputNumber>
+        <ValidationMessage For="@(() => empresa.PasswordLargo)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Intentos antes de Bloquear</label>
+        <InputNumber class="form-control" @bind-Value="empresa.PasswordIntentosAntesDeBloquear"></InputNumber>
+        <ValidationMessage For="@(() => empresa.PasswordIntentosAntesDeBloquear)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Cantidad de Números en Password</label>
+        <InputNumber class="form-control" @bind-Value="empresa.PasswordCantidadNumeros"></InputNumber>
+        <ValidationMessage For="@(() => empresa.PasswordCantidadNumeros)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Preguntas de Seguridad a Validar</label>
+        <InputNumber class="form-control" @bind-Value="empresa.PasswordCantidadPreguntasValidar"></InputNumber>
+        <ValidationMessage For="@(() => empresa.PasswordCantidadPreguntasValidar)"></ValidationMessage>
+    </div>
+
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="/VistaIEmpresa">Volver</a>
+</EditForm>
+
+@code {
+
+    [Parameter]
+    public int idempresaEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    EmpresaEM empresa = new EmpresaEM();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (idempresaEditar != 0)
+        {
+            empresa = await empresaService.Buscar(idempresaEditar);
+            btnTexto = "Actualizar Empresa";
+            Titulo = "Editar Empresa";
+        }
+        else
+        {
+            btnTexto = "Guardar  Empresa";
+            Titulo = "Guardar  Empresa";
+        }
+    }
+
+    private async Task OnValidSubmit()
+    {
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var userName = authState.User.Identity?.Name;
+
+
+        empresa.UsuarioModificacion = userName ?? "Desconocido";
+        empresa.FechaModificacion = DateTime.Now;
+
+        int idDevuelto = 0;
+        if (idempresaEditar == 0)
+            idDevuelto = await empresaService.Guardar(empresa);
+        else
+            idDevuelto = await empresaService.Editar(empresa);
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/VistaIEmpresa");
+    }
+}

@@ -1,0 +1,110 @@
+﻿@page "/FormularioMenu"
+@page "/Formulariomenu/{idMenuEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+
+@inject IModulo moduloService;
+@inject IMenu menuService;
+@inject NavigationManager navegation;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+
+<h3>Formulario Menu</h3>
+
+<EditForm Model="menu" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Modulo</label>
+        <InputSelect class="form-select" @bind-Value="menu.IdModulo">
+            <option value="0">--Seleccionar--</option>
+            @foreach (var item in listamodulo)
+            {
+                <option value="@item.IdModulo">@item.Nombre</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(() => menu.IdModulo)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="menu.Nombre"></InputText>
+        <ValidationMessage For="@(()=>menu.Nombre)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Orden de Menu </label>
+        <InputNumber class="form-control" @bind-Value="menu.OrdenMenu"></InputNumber>
+        <ValidationMessage For="@(()=>menu.OrdenMenu)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Creacion</label>
+        <InputDate class="form-control" @bind-Value="menu.FechaCreacion" />
+        <ValidationMessage For="@(() => menu.FechaCreacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Creacion</label>
+        <InputText class="form-control" @bind-Value="menu.UsuarioCreacion"></InputText>
+        <ValidationMessage For="@(()=>menu.UsuarioCreacion)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Modificacion</label>
+        <InputDate class="form-control" @bind-Value="menu.FechaModificacion" />
+        <ValidationMessage For="@(() => menu.FechaModificacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Modificacion</label>
+        <InputText class="form-control" @bind-Value="menu.UsuarioModificacion"></InputText>
+        <ValidationMessage For="@(()=>menu.UsuarioModificacion)"></ValidationMessage>
+    </div>
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="Vistamodulo">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int idMenuEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    MenuMN menu = new MenuMN();
+    ModuloMD soporte = new ModuloMD();
+    List<ModuloMD> listamodulo = new List<ModuloMD>();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        listamodulo = await moduloService.Lista();
+
+        if (idMenuEditar != 0)
+        {
+            menu = await menuService.Buscar(idMenuEditar);
+            btnTexto = "Actualizar el Menu";
+            Titulo = "Edita el Menu ";
+        }
+        else
+        {
+
+            btnTexto = "Guardar el Menu";
+            Titulo = "Guardar Menu";
+
+        }
+
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+        if (idMenuEditar == 0)
+            idDevuelto = await menuService.Guardar(menu);
+        else
+            idDevuelto = await menuService.Editar(menu);
+
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/Vistamenu");
+    }
+}

@@ -1,0 +1,94 @@
+﻿@page "/FormularioModulo"
+@page "/Formulariomodulo/{idModuloEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Services;
+
+@inject IModulo moduloService;
+@inject NavigationManager navegation;
+@inject HttpClient Http
+@using Microsoft.AspNetCore.Authorization;
+@attribute [Authorize(Roles = "Administrador")]
+
+<h3>Formulario Modulo</h3>
+
+<EditForm Model="modulo" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <InputText class="form-control" @bind-Value="modulo.Nombre"></InputText>
+        <ValidationMessage For="@(()=>modulo.Nombre)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Orden de Menu </label>
+        <InputNumber class="form-control" @bind-Value="modulo.OrdenMenu"></InputNumber>
+        <ValidationMessage For="@(()=>modulo.OrdenMenu)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Creacion</label>
+        <InputDate class="form-control" @bind-Value="modulo.FechaCreacion" />
+        <ValidationMessage For="@(() => modulo.FechaCreacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Creacion</label>
+        <InputText class="form-control" @bind-Value="modulo.UsuarioCreacion"></InputText>
+        <ValidationMessage For="@(()=>modulo.UsuarioCreacion)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha Modificacion</label>
+        <InputDate class="form-control" @bind-Value="modulo.FechaModificacion" />
+        <ValidationMessage For="@(() => modulo.FechaModificacion)" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Usuario Modificacion</label>
+        <InputText class="form-control" @bind-Value="modulo.UsuarioModificacion"></InputText>
+        <ValidationMessage For="@(()=>modulo.UsuarioModificacion)"></ValidationMessage>
+    </div>
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href="Vistamodulo">Volver</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int idModuloEditar { get; set; } = 0;
+
+    string Titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    ModuloMD modulo = new ModuloMD();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (idModuloEditar != 0)
+        {
+            modulo = await moduloService.Buscar(idModuloEditar);
+            btnTexto = "Actualizar el Modulo";
+            Titulo = "Edita el Modulo ";
+        }
+        else
+        {
+
+            btnTexto = "Guardar el Modulo";
+            Titulo = "Guardar Modulo";
+
+        }
+
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+        if (idModuloEditar == 0)
+            idDevuelto = await moduloService.Guardar(modulo);
+        else
+            idDevuelto = await moduloService.Editar(modulo);
+
+
+        if (idDevuelto != 0)
+            navegation.NavigateTo("/Vistamodulo");
+    }
+}
