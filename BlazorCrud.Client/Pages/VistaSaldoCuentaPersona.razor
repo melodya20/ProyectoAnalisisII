@@ -1,20 +1,10 @@
 ﻿@page "/VistaSaldoCuentaPersona"
-@using BlazorCrud.Shared
-@using CurrieTechnologies.Razor.SweetAlert2
-@using BlazorCrud.Client.Services
-
-@inject SweetAlertService Swall
-@inject ISaldoCuenta saldoService
-@inject IMovCuenta movimientoService
-@inject HttpClient Http
-@using Microsoft.AspNetCore.Authorization;
-@inject NavigationManager navigation
 
 <h3>Estado de cuenta por persona</h3>
 
 <div class="mb-3">
-    <label class="form-label">Buscar por ID de Persona:</label>
-    <InputNumber class="form-control" @bind-Value="idPersonaBusqueda"></InputNumber>
+    <label class="form-label">Buscar por Nombre de Persona:</label>
+    <InputText class="form-control" @bind-Value="nombrePersonaBusqueda"></InputText>
     <button class="btn btn-primary mt-2" @onclick="BuscarSaldoCuenta">Buscar</button>
 </div>
 
@@ -22,72 +12,155 @@
 {
     <h4>Información de la Cuenta</h4>
     <ul>
-        <li><strong>Nombre:</strong> @saldoPersona?.Persona?.Nombre</li>
-        <li><strong>Estado de la Cuenta:</strong> @saldoPersona?.StatusCuentum?.Nombre</li>
-        <li><strong>Tipo de Saldo:</strong> @saldoPersona?.TipoSaldoCuenta?.Nombre</li>
-        <li><strong>Saldo Anterior:</strong> @saldoPersona?.SaldoAnterior</li>
-        <li><strong>Débitos:</strong> @saldoPersona?.Debitos</li>
-        <li><strong>Créditos:</strong> @saldoPersona?.Creditos</li>
-        <li><strong>Saldo Actual:</strong> @saldoPersona?.SaldoActual</li>
+        <li><strong>Nombre:</strong> @saldoPersona.Nombre</li>
+        <li><strong>Estado de la Cuenta:</strong> @saldoPersona.StatusCuenta</li>
+        <li><strong>Tipo de Saldo:</strong> @saldoPersona.TipoSaldoCuenta</li>
+        <li><strong>Saldo Anterior:</strong> @saldoPersona.SaldoAnterior</li>
+        <li><strong>Débitos:</strong> @saldoPersona.Debitos</li>
+        <li><strong>Créditos:</strong> @saldoPersona.Creditos</li>
+        <li><strong>Saldo Actual:</strong> @saldoPersona.SaldoActual</li>
     </ul>
 
-
     <h4>Movimientos del Mes</h4>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Fecha del Movimiento</th>
-                <th>Tipo de Movimiento</th>
-                <th>Valor del Movimiento</th>
-                <th>Descripción</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (movimientosPersona != null && movimientosPersona.Any())
-            {
+    @if (movimientosPersona.Any())
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Fecha del Movimiento</th>
+                    <th>Tipo de Movimiento</th>
+                    <th>Valor del Movimiento</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
                 @foreach (var mov in movimientosPersona)
                 {
                     <tr>
                         <td>@mov.FechaCreacion.ToShortDateString()</td>
-                        <td>@mov.movimiento?.Nombre</td>
+                        <td>@mov.TipoMovimiento</td>
                         <td>@mov.ValorMovimiento</td>
                         <td>@mov.Descripcion</td>
                     </tr>
                 }
-            }
-            else
-            {
-                <tr>
-                    <td colspan="4" class="text-center">No se encontraron movimientos para esta persona en el mes.</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p class="text-center">No hubo movimientos para esta persona en el mes.</p>
+    }
 }
 else if (busquedaRealizada)
 {
-    <p class="text-danger">No se encontraron registros para el ID de Persona ingresado.</p>
+    <p class="text-danger">No se encontraron registros para el nombre de la persona ingresada o no tiene saldo.</p>
 }
 
 @code {
-    private int idPersonaBusqueda;
-    private SaldoCuentumSC? saldoPersona;
-    private List<MovimientoCuentaMC> movimientosPersona = new List<MovimientoCuentaMC>(); // Inicialización de la lista vacía
+    private string nombrePersonaBusqueda;
+    private Cuenta saldoPersona;
+    private List<Movimiento> movimientosPersona = new List<Movimiento>();
     private bool busquedaRealizada = false;
 
-    private async Task BuscarSaldoCuenta()
+
+    private List<Cuenta> cuentas = new List<Cuenta>
+    {
+        new Cuenta
+        {
+            Nombre = "Ernesto Arturo",
+            StatusCuenta = "Cuenta Activa",
+            TipoSaldoCuenta = "Préstamo Personal",
+            SaldoAnterior = 750.00m,
+            Debitos = 1000.00m,
+            Creditos = 500.00m,
+            SaldoActual = 1250.00m,
+            Movimientos = new List<Movimiento>
+            {
+                new Movimiento
+                {
+                    FechaCreacion = DateTime.Parse("2024-10-12"),
+                    TipoMovimiento = "Depósito",
+                    ValorMovimiento = 500.00m,
+                    Descripcion = "Depósito en cuenta"
+                },
+                new Movimiento
+                {
+                    FechaCreacion = DateTime.Parse("2024-10-10"),
+                    TipoMovimiento = "Retiro",
+                    ValorMovimiento = 1000.00m,
+                    Descripcion = "Retiro en cajero"
+                },
+                new Movimiento
+                {
+                    FechaCreacion = DateTime.Parse("2024-10-15"),
+                    TipoMovimiento = "Consumo",
+                    ValorMovimiento = 150.00m,
+                    Descripcion = "Pago factura"
+                }
+            }
+        },
+        new Cuenta
+        {
+            Nombre = "Martina Isadora",
+            StatusCuenta = "Cuenta Activa",
+            TipoSaldoCuenta = "Préstamo Personal",
+            SaldoAnterior = 500.00m,
+            Debitos = 300.00m,
+            Creditos = 200.00m,
+            SaldoActual = 400.00m,
+            Movimientos = new List<Movimiento>
+            {
+                new Movimiento
+                {
+                    FechaCreacion = DateTime.Parse("2024-10-08"),
+                    TipoMovimiento = "Pago",
+                    ValorMovimiento = 300.00m,
+                    Descripcion = "Pago en tienda"
+                },
+                new Movimiento
+                {
+                    FechaCreacion = DateTime.Parse("2024-10-05"),
+                    TipoMovimiento = "Depósito",
+                    ValorMovimiento = 200.00m,
+                    Descripcion = "Depósito en cuenta"
+                }
+
+            }
+        }
+    };
+
+    private void BuscarSaldoCuenta()
     {
         busquedaRealizada = true;
-        saldoPersona = await saldoService.ObtenerPorPersona(idPersonaBusqueda);
-
+        saldoPersona = cuentas.FirstOrDefault(c => c.Nombre.Contains(nombrePersonaBusqueda, StringComparison.OrdinalIgnoreCase));
         if (saldoPersona != null)
         {
-            // Cargar los movimientos solo si existe saldo para la persona
-            movimientosPersona = await movimientoService.ObtenerMovimientosPorPersonaMes(idPersonaBusqueda, DateTime.Now.Month);
+            movimientosPersona = saldoPersona.Movimientos.ToList();
         }
         else
         {
-            movimientosPersona = new List<MovimientoCuentaMC>();
+            movimientosPersona.Clear();
         }
+    }
+
+
+    public class Cuenta
+    {
+        public string Nombre { get; set; }
+        public string StatusCuenta { get; set; }
+        public string TipoSaldoCuenta { get; set; }
+        public decimal SaldoAnterior { get; set; }
+        public decimal Debitos { get; set; }
+        public decimal Creditos { get; set; }
+        public decimal SaldoActual { get; set; }
+        public List<Movimiento> Movimientos { get; set; }
+    }
+
+    public class Movimiento
+    {
+        public DateTime FechaCreacion { get; set; }
+        public string TipoMovimiento { get; set; }
+        public decimal ValorMovimiento { get; set; }
+        public string Descripcion { get; set; }
     }
 }
