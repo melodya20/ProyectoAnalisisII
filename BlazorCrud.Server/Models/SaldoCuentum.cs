@@ -34,6 +34,7 @@ public partial class SaldoCuentum
     public virtual TipoSaldoCuentum IdTipoSaldoCuentaNavigation { get; set; } = null!;
 
     public virtual ICollection<MovimientoCuentum> MovimientoCuenta { get; set; } = new List<MovimientoCuentum>();
+
     public decimal SaldoActual
     {
         get { return (SaldoAnterior ?? 0) + (Debitos ?? 0) - (Creditos ?? 0); }
